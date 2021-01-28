@@ -15,12 +15,15 @@ Including another URLconf
 """
 from django.urls import path, include
 from rest_framework import routers
+from rest_framework.generics import ListCreateAPIView
 
 from todo import views
-
-router = routers.DefaultRouter()
-router.register(r'todos', views.TodoViewSet)
+from todo.models import TTodoTask
+from todo.serializers import TodoTaskSerializer
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('todos/', ListCreateAPIView.as_view(
+        queryset=TTodoTask.objects.all(),
+        serializer_class=TodoTaskSerializer),
+         name='todo-list'),
 ]
