@@ -7,5 +7,3 @@ from todo.serializers import TodoTaskSerializer
 class TodoList(generics.ListCreateAPIView):
     queryset = TTodoTask.objects.all()
     serializer_class = TodoTaskSerializer
-
-
