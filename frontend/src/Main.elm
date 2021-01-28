@@ -2,12 +2,12 @@ module Main exposing (..)
 
 import Browser
 import Http
-import Css exposing (rgb, solid, px, border3)
-import Html  exposing (Html, div, text)
+import Task
+import Css exposing (rgb, solid, px, border, padding, backgroundColor)
+import Html  exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
-import Html.Events exposing (onClick)
-import Html.Events exposing (on)
+import Html.Events exposing (onInput, onClick, on)
+import Json.Encode as E
 import Json.Decode as D exposing (Decoder, field, bool, string, int)
 import Json.Decode exposing (list, succeed)
 import Task exposing (succeed)
@@ -44,7 +44,7 @@ type alias Model =
 
 init : (Model, Cmd Msg)
 init =
-  (Model [] "" , getTodos)
+  (Model [] "" ,  getTodos)
 
 
 -- UPDATE
@@ -52,46 +52,42 @@ init =
 
 type Msg
   = AddTodo
-  | Change String
   -- | UpdateTask Int
-  | GotTodo (Result Http.Error (List TodoTask))
+  | GotTodos (Result Http.Error (List TodoTask))
+  | GotTodo (Result Http.Error (TodoTask))
   | GetTodos
+  | ChangeContent String
 
+run : msg -> Cmd msg
+run m =
+    Task.perform (always m) (Task.succeed ())
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    AddTodo ->
+        (model, addTodo model)
+    ChangeContent newContent ->
+      ({ model | content = newContent }, Cmd.none)
     GetTodos -> 
       (model, getTodos)
-    GotTodo result ->
+    GotTodos result ->
       case result of
         Ok todoTaskList ->   
           let
-            gotTasks = List.take 5 todoTaskList
+            gotTasks = List.take (List.length todoTaskList) todoTaskList
           in
-          ({
-            model | tasks = gotTasks
-          },
-          Cmd.none)
+          ({ model | tasks = gotTasks }
+          , run (ChangeContent "") )
         _ ->
           (model, Cmd.none)
-    AddTodo ->
-      let 
-        newId = ( List.length model.tasks) + 1
-        newTasks = model.tasks ++ [TodoTask newId model.content New]
-      in
-      ({ model | tasks = newTasks
-      , content = ""}
-      , Cmd.none)
-    Change changeContent ->
-      ({ model | content = changeContent }
-      , Cmd.none)
-    -- UpdateTask id ->
-    --   let 
-    --     newTasks = List.map (isDoneChecker id) model.tasks
-    --   in
-    --   ({ model | tasks = newTasks}
-    --   , Cmd.none)
+    GotTodo result ->
+      case result of
+        Ok todoTask ->   
+          ({ model | tasks =  model.tasks ++ [todoTask] }
+          , run (ChangeContent "") )
+        _ ->
+          (model, Cmd.none)
 
 -- HELPERS
 
@@ -111,13 +107,23 @@ getTodos : Cmd Msg
 getTodos =
     Http.request
         { method = "GET"
-        , headers =
-            [ Http.header "Accept" "application/json"
-            , Http.header "Content-Type" "application/json"
-            ]
+        , headers = [ Http.header "Content-Type" "application/json" ]
         , url = "http://0.0.0.0:8000/todos/"
-        , expect = Http.expectJson GotTodo todoListDecoder
+        , expect = Http.expectJson GotTodos todoListDecoder
         , body = Http.emptyBody
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+addTodo  : Model -> Cmd Msg
+addTodo model =
+    Http.request
+        { method = "POST"
+        , headers = []
+        , url = "http://0.0.0.0:8000/todos/"
+        -- TODO: フロントに追加する処理を書く
+        , expect = Http.expectJson GotTodo todoDecoder
+        , body = Http.jsonBody <| E.object [("name", E.string model.content)]
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -125,4 +131,22 @@ getTodos =
 -- View
 view : Model ->  Html Msg
 view model =
-  div [] [text "hello"]
+  div [] [
+    ul [] (taskListView model.tasks)
+    , div [] [
+      input [ 
+        placeholder "タスク名を入力する"
+        , value model.content
+        , onInput ChangeContent
+      ] []
+      , button [ onClick AddTodo ] [ text "追加" ]
+    ]
+  ]
+
+taskListView : (List TodoTask) -> List (Html Msg)
+taskListView tasks = 
+  List.map taskView tasks
+
+taskView : TodoTask -> Html msg
+taskView task =
+  li [] [ text task.name ]
