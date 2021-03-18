@@ -5333,12 +5333,12 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Main$Model = F2(
-	function (tasks, content) {
-		return {content: content, tasks: tasks};
+var $author$project$Main$Model = F3(
+	function (tasks, content, ids) {
+		return {content: content, ids: ids, tasks: tasks};
 	});
-var $author$project$Main$GotTodo = function (a) {
-	return {$: 'GotTodo', a: a};
+var $author$project$Main$GotTodos = function (a) {
+	return {$: 'GotTodos', a: a};
 };
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
@@ -6129,11 +6129,11 @@ var $elm$http$Http$request = function (r) {
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
 var $elm$json$Json$Decode$list = _Json_decodeList;
-var $author$project$Main$New = {$: 'New'};
 var $author$project$Main$TodoTask = F3(
 	function (id, name, isCompleted) {
 		return {id: id, isCompleted: isCompleted, name: name};
 	});
+var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$map3 = _Json_map3;
@@ -6143,15 +6143,14 @@ var $author$project$Main$todoDecoder = A4(
 	$author$project$Main$TodoTask,
 	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
-	$elm$json$Json$Decode$succeed($author$project$Main$New));
+	A2($elm$json$Json$Decode$field, 'is_completed', $elm$json$Json$Decode$bool));
 var $author$project$Main$todoListDecoder = $elm$json$Json$Decode$list($author$project$Main$todoDecoder);
 var $author$project$Main$getTodos = $elm$http$Http$request(
 	{
 		body: $elm$http$Http$emptyBody,
-		expect: A2($elm$http$Http$expectJson, $author$project$Main$GotTodo, $author$project$Main$todoListDecoder),
+		expect: A2($elm$http$Http$expectJson, $author$project$Main$GotTodos, $author$project$Main$todoListDecoder),
 		headers: _List_fromArray(
 			[
-				A2($elm$http$Http$header, 'Accept', 'application/json'),
 				A2($elm$http$Http$header, 'Content-Type', 'application/json')
 			]),
 		method: 'GET',
@@ -6160,15 +6159,156 @@ var $author$project$Main$getTodos = $elm$http$Http$request(
 		url: 'http://0.0.0.0:8000/todos/'
 	});
 var $author$project$Main$init = _Utils_Tuple2(
-	A2($author$project$Main$Model, _List_Nil, ''),
+	A3($author$project$Main$Model, _List_Nil, '', _List_Nil),
 	$author$project$Main$getTodos);
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (model) {
 	return $elm$core$Platform$Sub$none;
 };
+var $author$project$Main$UpdateContent = function (a) {
+	return {$: 'UpdateContent', a: a};
+};
+var $author$project$Main$GotTodo = function (a) {
+	return {$: 'GotTodo', a: a};
+};
+var $elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2($elm$json$Json$Encode$encode, 0, value));
+};
+var $elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v0, obj) {
+					var k = _v0.a;
+					var v = _v0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$addTodo = function (model) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$jsonBody(
+				$elm$json$Json$Encode$object(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'name',
+							$elm$json$Json$Encode$string(model.content))
+						]))),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotTodo, $author$project$Main$todoDecoder),
+			headers: _List_Nil,
+			method: 'POST',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: 'http://0.0.0.0:8000/todos/'
+		});
+};
+var $elm_community$list_extra$List$Extra$find = F2(
+	function (predicate, list) {
+		find:
+		while (true) {
+			if (!list.b) {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var first = list.a;
+				var rest = list.b;
+				if (predicate(first)) {
+					return $elm$core$Maybe$Just(first);
+				} else {
+					var $temp$predicate = predicate,
+						$temp$list = rest;
+					predicate = $temp$predicate;
+					list = $temp$list;
+					continue find;
+				}
+			}
+		}
+	});
+var $author$project$Main$getById = F2(
+	function (id, task) {
+		return _Utils_eq(task.id, id) ? true : false;
+	});
+var $author$project$Main$getCompletedTaskIds = function (tasks) {
+	var filterCompletedTask = function (task) {
+		return task.isCompleted ? $elm$core$Maybe$Just(task.id) : $elm$core$Maybe$Nothing;
+	};
+	return A2($elm$core$List$filterMap, filterCompletedTask, tasks);
+};
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $author$project$Main$getUncompletedTasks = function (tasks) {
+	var filter = function (task) {
+		return task.isCompleted ? false : true;
+	};
+	return A2($elm$core$List$filter, filter, tasks);
+};
+var $author$project$Main$isNewTask = F2(
+	function (id, tasks) {
+		var target = A2(
+			$elm_community$list_extra$List$Extra$find,
+			$author$project$Main$getById(id),
+			tasks);
+		if (target.$ === 'Just') {
+			return false;
+		} else {
+			return true;
+		}
+	});
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$RemoveCompletedTasks = function (a) {
+	return {$: 'RemoveCompletedTasks', a: a};
+};
+var $elm$json$Json$Encode$int = _Json_wrap;
+var $elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				$elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(_Utils_Tuple0),
+				entries));
+	});
+var $author$project$Main$removeTodoReq = function (taskIds) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$jsonBody(
+				A2($elm$json$Json$Encode$list, $elm$json$Json$Encode$int, taskIds)),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$RemoveCompletedTasks, $author$project$Main$todoDecoder),
+			headers: _List_Nil,
+			method: 'DELETE',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: 'http://0.0.0.0:8000/todos/delete'
+		});
+};
+var $elm$core$Basics$always = F2(
+	function (a, _v0) {
+		return a;
+	});
+var $author$project$Main$run = function (m) {
+	return A2(
+		$elm$core$Task$perform,
+		$elm$core$Basics$always(m),
+		$elm$core$Task$succeed(_Utils_Tuple0));
+};
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
 		takeReverse:
@@ -6295,56 +6435,306 @@ var $elm$core$List$take = F2(
 	function (n, list) {
 		return A3($elm$core$List$takeFast, 0, n, list);
 	});
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Main$updateTodoReq = function (task) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$jsonBody(
+				$elm$json$Json$Encode$object(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'id',
+							$elm$json$Json$Encode$int(5)),
+							_Utils_Tuple2(
+							'name',
+							$elm$json$Json$Encode$string(task.name)),
+							_Utils_Tuple2(
+							'is_completed',
+							$elm$json$Json$Encode$bool(!task.isCompleted))
+						]))),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotTodo, $author$project$Main$todoDecoder),
+			headers: _List_Nil,
+			method: 'PUT',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: 'http://0.0.0.0:8000/todos/' + $elm$core$String$fromInt(task.id)
+		});
+};
+var $author$project$Main$updateTodoTask = F2(
+	function (todoTask, task) {
+		return _Utils_eq(todoTask.id, task.id) ? _Utils_update(
+			task,
+			{isCompleted: todoTask.isCompleted}) : task;
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
-			case 'GetTodos':
-				return _Utils_Tuple2(model, $author$project$Main$getTodos);
-			case 'GotTodo':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var todoTaskList = result.a;
-					var gotTasks = A2($elm$core$List$take, 5, todoTaskList);
+			case 'RemoveCompletedTasks':
+				var res = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							tasks: $author$project$Main$getUncompletedTasks(model.tasks)
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 'RemoveCompletedTodos':
+				var completedTasksIds = $author$project$Main$getCompletedTaskIds(model.tasks);
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{ids: completedTasksIds}),
+					$author$project$Main$removeTodoReq(completedTasksIds));
+			case 'UpdateTodoStatus':
+				var id = msg.a;
+				var targetTask = A2(
+					$elm_community$list_extra$List$Extra$find,
+					$author$project$Main$getById(id),
+					model.tasks);
+				if (targetTask.$ === 'Just') {
+					var task = targetTask.a;
 					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{tasks: gotTasks}),
-						$elm$core$Platform$Cmd$none);
+						model,
+						$author$project$Main$updateTodoReq(task));
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
 			case 'AddTodo':
-				var newId = $elm$core$List$length(model.tasks) + 1;
-				var newTasks = _Utils_ap(
-					model.tasks,
-					_List_fromArray(
-						[
-							A3($author$project$Main$TodoTask, newId, model.content, $author$project$Main$New)
-						]));
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$addTodo(model));
+			case 'UpdateContent':
+				var newContent = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{content: '', tasks: newTasks}),
+						{content: newContent}),
 					$elm$core$Platform$Cmd$none);
+			case 'GetTodos':
+				return _Utils_Tuple2(model, $author$project$Main$getTodos);
+			case 'GotTodos':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var todoTaskList = result.a;
+					var gotTasks = A2(
+						$elm$core$List$take,
+						$elm$core$List$length(todoTaskList),
+						todoTaskList);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{tasks: gotTasks}),
+						$author$project$Main$run(
+							$author$project$Main$UpdateContent('')));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			default:
-				var changeContent = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{content: changeContent}),
-					$elm$core$Platform$Cmd$none);
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var todoTask = result.a;
+					var isNew = A2($author$project$Main$isNewTask, todoTask.id, model.tasks);
+					var currentTasks = A2(
+						$elm$core$List$map,
+						$author$project$Main$updateTodoTask(todoTask),
+						model.tasks);
+					var tasks = _Utils_ap(
+						currentTasks,
+						_List_fromArray(
+							[
+								A3($author$project$Main$TodoTask, todoTask.id, model.content, false)
+							]));
+					return isNew ? _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{tasks: tasks}),
+						$author$project$Main$run(
+							$author$project$Main$UpdateContent(''))) : _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{tasks: currentTasks}),
+						$author$project$Main$run(
+							$author$project$Main$UpdateContent('')));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 		}
 	});
+var $author$project$Main$AddTodo = {$: 'AddTodo'};
+var $author$project$Main$RemoveCompletedTodos = {$: 'RemoveCompletedTodos'};
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var $elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysStop,
+			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
+};
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $author$project$Main$UpdateTodoStatus = function (a) {
+	return {$: 'UpdateTodoStatus', a: a};
+};
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $author$project$Main$checkboxView = function (task) {
+	return task.isCompleted ? A2(
+		$elm$html$Html$input,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$type_('checkbox'),
+				$elm$html$Html$Attributes$checked(true),
+				$elm$html$Html$Events$onClick(
+				$author$project$Main$UpdateTodoStatus(task.id))
+			]),
+		_List_Nil) : A2(
+		$elm$html$Html$input,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$type_('checkbox'),
+				$elm$html$Html$Events$onClick(
+				$author$project$Main$UpdateTodoStatus(task.id))
+			]),
+		_List_Nil);
+};
+var $elm$html$Html$li = _VirtualDom_node('li');
+var $elm$html$Html$span = _VirtualDom_node('span');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$taskView = function (task) {
+	return A2(
+		$elm$html$Html$li,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'list-style', 'none')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$author$project$Main$checkboxView(task)
+					])),
+				$elm$html$Html$text(task.name)
+			]));
+};
+var $author$project$Main$taskListView = function (tasks) {
+	return A2($elm$core$List$map, $author$project$Main$taskView, tasks);
+};
+var $elm$html$Html$ul = _VirtualDom_node('ul');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
 			[
-				$elm$html$Html$text('hello')
+				A2(
+				$elm$html$Html$h1,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Elm de TODO')
+					])),
+				A2(
+				$elm$html$Html$input,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$placeholder('タスク名を入力する'),
+						$elm$html$Html$Attributes$value(model.content),
+						$elm$html$Html$Events$onInput($author$project$Main$UpdateContent)
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$AddTodo)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('追加')
+					])),
+				A2(
+				$elm$html$Html$ul,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'padding', '0')
+					]),
+				$author$project$Main$taskListView(model.tasks)),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$RemoveCompletedTodos)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('完了したタスクを削除する')
+					]))
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
