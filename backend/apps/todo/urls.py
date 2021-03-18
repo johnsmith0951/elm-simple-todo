@@ -13,15 +13,23 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path
-from rest_framework.generics import ListCreateAPIView
+# from django.urls import path
+# from rest_framework.generics import ListCreateAPIView
 
-from todo.models import TTodoTask
-from todo.serializers import TodoTaskSerializer
+# from todo.models import TTodoTask
+# from todo.serializers import TodoTaskSerializer
 
-urlpatterns = [
-    path('todos/', ListCreateAPIView.as_view(
-        queryset=TTodoTask.objects.all(),
-        serializer_class=TodoTaskSerializer),
-         name='todo-list'),
-]
+# urlpatterns = [
+    # path('todos/', ListCreateAPIView.as_view(
+    #     queryset=TTodoTask.objects.all(),
+    #     serializer_class=TodoTaskSerializer),
+    #      name='todo-list'),
+
+# ]
+from rest_framework import routers
+from .views import TodoListView
+
+router = routers.DefaultRouter()
+router.register(r'todos', TodoListView, 'todos')
+
+urlpatterns = router.urls

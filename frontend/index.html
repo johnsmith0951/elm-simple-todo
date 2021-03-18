@@ -6156,7 +6156,7 @@ var $author$project$Main$getTodos = $elm$http$Http$request(
 		method: 'GET',
 		timeout: $elm$core$Maybe$Nothing,
 		tracker: $elm$core$Maybe$Nothing,
-		url: 'http://0.0.0.0:8000/todos/'
+		url: 'http://ec2-100-26-208-65.compute-1.amazonaws.com/todos/'
 	});
 var $author$project$Main$init = _Utils_Tuple2(
 	A3($author$project$Main$Model, _List_Nil, '', _List_Nil),
@@ -6208,7 +6208,7 @@ var $author$project$Main$addTodo = function (model) {
 			method: 'POST',
 			timeout: $elm$core$Maybe$Nothing,
 			tracker: $elm$core$Maybe$Nothing,
-			url: 'http://0.0.0.0:8000/todos/'
+			url: 'http://ec2-100-26-208-65.compute-1.amazonaws.com/todos/'
 		});
 };
 var $elm_community$list_extra$List$Extra$find = F2(
@@ -6296,7 +6296,7 @@ var $author$project$Main$removeTodoReq = function (taskIds) {
 			method: 'DELETE',
 			timeout: $elm$core$Maybe$Nothing,
 			tracker: $elm$core$Maybe$Nothing,
-			url: 'http://0.0.0.0:8000/todos/delete'
+			url: 'http://ec2-100-26-208-65.compute-1.amazonaws.com/todos/delete'
 		});
 };
 var $elm$core$Basics$always = F2(
@@ -6459,7 +6459,7 @@ var $author$project$Main$updateTodoReq = function (task) {
 			method: 'PUT',
 			timeout: $elm$core$Maybe$Nothing,
 			tracker: $elm$core$Maybe$Nothing,
-			url: 'http://0.0.0.0:8000/todos/' + $elm$core$String$fromInt(task.id)
+			url: 'http://ec2-100-26-208-65.compute-1.amazonaws.com/todos/' + $elm$core$String$fromInt(task.id)
 		});
 };
 var $author$project$Main$updateTodoTask = F2(

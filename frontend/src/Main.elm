@@ -188,7 +188,7 @@ removeTodoReq taskIds =
     Http.request
         { method = "DELETE"
         , headers = []
-        , url = "http://0.0.0.0:8000/todos/delete" 
+        , url = "http://ec2-100-26-208-65.compute-1.amazonaws.com/todos/delete" 
         , expect = Http.expectJson RemoveCompletedTasks todoDecoder
         , body = Http.jsonBody <| E.list E.int taskIds
         , timeout = Nothing
@@ -200,7 +200,7 @@ updateTodoReq task =
     Http.request
         { method = "PUT"
         , headers = []
-        , url = "http://0.0.0.0:8000/todos/" ++ String.fromInt task.id
+        , url = "http://ec2-100-26-208-65.compute-1.amazonaws.com/todos/" ++ String.fromInt task.id
         , expect = Http.expectJson GotTodo todoDecoder
         , body = Http.jsonBody <| E.object [
           ("id", E.int 5)
@@ -216,7 +216,7 @@ getTodos =
     Http.request
         { method = "GET"
         , headers = [ Http.header "Content-Type" "application/json" ]
-        , url = "http://0.0.0.0:8000/todos/"
+        , url = "http://ec2-100-26-208-65.compute-1.amazonaws.com/todos/"
         , expect = Http.expectJson GotTodos todoListDecoder
         , body = Http.emptyBody
         , timeout = Nothing
@@ -228,7 +228,7 @@ addTodo model =
     Http.request
         { method = "POST"
         , headers = []
-        , url = "http://0.0.0.0:8000/todos/"
+        , url = "http://ec2-100-26-208-65.compute-1.amazonaws.com/todos/"
         , expect = Http.expectJson GotTodo todoDecoder
         , body = Http.jsonBody <| E.object [("name", E.string model.content)]
         , timeout = Nothing

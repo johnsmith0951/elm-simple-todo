@@ -32,3 +32,6 @@ dbshell:
 	docker-compose exec $(CONTAINER) python3 manage.py dbshell
 manage:
 	docker-compose exec $(CONTAINER) python3 manage.py ${cmd}
+attach:
+	docker attach $(shell docker ps | grep backend |  grep $(CONTAINER) | grep "^[a-zA-Z0-9_.-]*" -o)
+

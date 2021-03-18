@@ -12,6 +12,8 @@ services:
   web:
     build: .
     command: python apps/manage.py runserver 0.0.0.0:8000
+    tty: true
+    stdin_open: true
     volumes:
       - .:/code
     ports:
